@@ -42,7 +42,8 @@ class Simulation(object):
     
     def initialize(self):
         self.pause = False
-        course_idx = 0 # 0 : 좌회전 / 1 : 직진 / 2 : 우회전
+        # course_idx = 0 # 0 : 좌회전 / 1 : 직진 / 2 : 우회전
+        course_idx = (int)(rospy.get_param("CourseId"))
         self.env = Environments(course_idx)
 
         

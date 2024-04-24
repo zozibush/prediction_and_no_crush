@@ -2,6 +2,8 @@
 
   <node pkg="vehicle_node" type="main.py" name="vehicle_node" output="screen"/>
       <param name="file_path" value="$(find vehicle_node)/" />
+      <param name="CourseId" value= "0" />
+      <!-- # 0 : 좌회전 / 1 : 직진 / 2 : 우회전 -->
 
   <node pkg="rviz" type="rviz" name="my_rviz" args="-d $(find vehicle_node)/../../simulation.rviz" />
   <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard" respawn="true"/>
