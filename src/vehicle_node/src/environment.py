@@ -9,6 +9,7 @@ import copy
 import bisect
 import matplotlib.cm as cm
 import matplotlib.animation as animation
+import math
 
 from IPython.display import HTML
 from utils import *
@@ -131,12 +132,17 @@ class Environments(object):
                 sensor_info = self.vehicles[id_].get_measure(self.vehicles)
                 local_lane_info = self.vehicles[id_].get_local_path()
                 
-                """
-                To Do 
+                ax = 0
+                steer = 0
                 
-                """
+                # 1. 주변 차량과의 거리가 일정 이하일 때 이동
+                dist_arr = [math.sqrt(x**2+y**2) for id, x, y, h, vx, vy in sensor_info]
+                min_dist = min(dist_arr) if len(dist_arr)>0 else 100
+                if 10 < min_dist:
+                    ax = 0.2
 
-                self.vehicles[id_].step_manual(ax = 0.2, steer = 0)
+
+                self.vehicles[id_].step_manual(ax = ax, steer = steer)
                 
                 
                 
