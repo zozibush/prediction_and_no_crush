@@ -134,7 +134,7 @@ class Environments(object):
                 # 1. convert to global
                 global_info = self.vehicles[id_]
                 global_sensor_info = self.convert_to_global(sensor_info, global_info)
-                global_lane_info = self.convert_to_global(local_lane_info, global_info)
+                global_lane_info = self.convert_to_global_path(local_lane_info, global_info)
 
                 # 2. filtering
                 filtered_sensor_info = self.filtering(global_sensor_info)
@@ -152,6 +152,26 @@ class Environments(object):
         if len(self.vehicles)<self.min_num_agent:
             self.spawn_agent()
 
+    def convert_to_global_path(self, local_infos, global_info):
+        global_path = []
+
+        global_x, global_y, global_h, global_v = global_info.x, global_info.y, global_info.h, global_info.v
+
+        for local_info in local_infos:
+            local_x, local_y, local_h, local_r = local_info
+
+            rotation_angle = global_h - local_h
+
+            rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle)],
+                                        [np.sin(rotation_angle), np.cos(rotation_angle)]])
+
+            global_positions = np.dot(rotation_matrix, np.array([local_x, local_y])) + np.array([global_x, global_y])
+
+            global_h = global_h
+
+            global_path.append(list(global_positions) + [global_h])
+
+        return global_path
     def convert_to_global(self, local_infos, global_info):
         global_path = []
 
@@ -216,14 +236,14 @@ class Environments(object):
         dist_arr = [get_distance(x,y,vehicle_x, vehicle_y) for id, x, y, h, vx, vy in sensor_info]
         
         # local path와의 거리
-        dist_arr = dist_arr + [get_distance(x,y,vehicle_x, vehicle_y) for id, x, y, h, R in lane_info]
+        dist_arr = dist_arr + [get_distance(x,y,vehicle_x, vehicle_y) for x, y, h in lane_info]
 
         min_dist = min(dist_arr) if len(dist_arr)>0 else 100
         if dist_threshold < min_dist:
             ax = 0.2
         else:
             ax = -0.2
-
+        print(min_dist)
         return ax, steer
 
 if __name__ == '__main__':
