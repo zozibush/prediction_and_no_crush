@@ -135,12 +135,14 @@ class Environments(object):
                 ax = 0
                 steer = self.vehicles[id_].lateral_controller()
                 
-                # 1. 주변 차량과의 거리가 일정 이하일 때 이동
+                # 1. 주변 차량과의 거리가 일정 거리 이상 멀어지면 가속, 아니면 감속
                 dist_threshold = 10
                 dist_arr = [math.sqrt(x**2+y**2) for id, x, y, h, vx, vy in sensor_info]
                 min_dist = min(dist_arr) if len(dist_arr)>0 else 100
                 if dist_threshold < min_dist:
-                    ax = 0.2
+                    ax = 1.0
+                else:
+                    ax = -1.0
 
 
                 self.vehicles[id_].step_manual(ax = ax, steer = steer)
