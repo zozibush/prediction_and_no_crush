@@ -132,10 +132,11 @@ class Environments(object):
 
                 # 1. convert to global
                 global_info = self.vehicles[id_]
-                sensor_info = self.convert_to_global(sensor_info, global_info)
+                global_sensor_info = self.convert_to_global(sensor_info, global_info)
+                global_lane_info = self.convert_to_global(local_lane_info, global_info)
 
                 # 2. filtering
-                sensor_info = self.filtering(sensor_info)
+                filtered_sensor_fino = self.filtering(global_sensor_info)
 
             else:
                 self.vehicles[id_].step_auto(self.vehicles, self.int_pt_list[id_])
