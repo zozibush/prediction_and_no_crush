@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import pickle
 import glob
 import copy
+import math
 import bisect
 import matplotlib.cm as cm
 import matplotlib.animation as animation
@@ -139,14 +140,13 @@ class Environments(object):
                 filtered_sensor_info = self.filtering(global_sensor_info)
 
                 # 3. control
-                ax, steer = self.control(global_lane_info, filtered_sensor_info)
+                ax, steer = self.control(self.vehicles[id_], global_lane_info, filtered_sensor_info)
 
                 self.vehicles[id_].step_manual(ax, steer)
 
             else:
                 self.vehicles[id_].step_auto(self.vehicles, self.int_pt_list[id_])
 
-            
 
     def respawn(self):
         if len(self.vehicles)<self.min_num_agent:
@@ -198,10 +198,33 @@ class Environments(object):
             filtered_sensor_info[-1][4] = moving_average(self.sensors[key][:,4], win_size)
 
         return filtered_sensor_info
-    
-    def contorl(self, lane_info, sensor_info):
-        # control algorithm
-        return 0, 0
+
+    def control(self, vehicle, lane_info, sensor_info):
+        def get_distance(x1, y1, x2, y2):
+            return math.sqrt((x1-x2)**2 + (y1-y2)**2)
+
+        steer = vehicle.lateral_controller()
+        ax = 0
+
+        vehicle_x = vehicle.x
+        vehicle_y = vehicle.y
+
+        # 일정 거리 미만일 때 가속, 아니면 감속
+        dist_threshold = 10 # 일정 거리
+
+        # SDV와의 거리
+        dist_arr = [get_distance(x,y,vehicle_x, vehicle_y) for id, x, y, h, vx, vy in sensor_info]
+        
+        # local path와의 거리
+        dist_arr = dist_arr + [get_distance(x,y,vehicle_x, vehicle_y) for id, x, y, h, R in lane_info]
+
+        min_dist = min(dist_arr) if len(dist_arr)>0 else 100
+        if dist_threshold < min_dist:
+            ax = 0.2
+        else:
+            ax = -0.2
+
+        return ax, steer
 
 if __name__ == '__main__':
 
