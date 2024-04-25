@@ -139,7 +139,7 @@ class Environments(object):
                 filtered_sensor_info = self.filtering(global_sensor_info)
 
                 # 3. control
-                ax, steer = self.control(self.vehicles[id_], global_lane_info, sensor_info)
+                ax, steer = self.control(self.vehicles[id_], global_lane_info, filtered_sensor_info)
 
                 self.vehicles[id_].step_manual(ax, steer)
 
