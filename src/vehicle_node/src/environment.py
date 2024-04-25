@@ -139,7 +139,7 @@ class Environments(object):
                 filtered_sensor_info = self.filtering(global_sensor_info)
 
                 # 3. control
-                ax, steer = self.control(self.vehicles[id_], global_lane_info, filtered_sensor_info)
+                ax, steer = self.control(self.vehicles[id_], global_lane_info, sensor_info)
 
                 self.vehicles[id_].step_manual(ax, steer)
 
@@ -214,13 +214,14 @@ class Environments(object):
         vehicle_y = vehicle.y
 
         # 일정 거리 미만일 때 가속, 아니면 감속
-        dist_threshold = 10 # 일정 거리
+        dist_threshold = 15 # 일정 거리
 
-        # SDV와의 거리
-        dist_arr = [get_distance(x,y,vehicle_x, vehicle_y) for id, x, y, h, vx, vy in sensor_info]
-        
-        # local path와의 거리
-        dist_arr = dist_arr + [get_distance(x,y,vehicle_x, vehicle_y) for x, y, h, r in lane_info]
+        # 센서 측정된 주변 차량과 SDV와의 거리
+        dist_arr = [get_distance(x, y, vehicle_x, vehicle_y) for id, x, y, h, vx, vy in sensor_info]
+
+        # 센서 측정된 주변 차량과 local path와의 거리
+        for id, x, y, h, vx, vy in sensor_info:
+            dist_arr = dist_arr + [get_distance(xx,yy,x, y) for xx, yy, hh, rr in lane_info[:30,:]]
 
         min_dist = min(dist_arr) if len(dist_arr)>0 else 100
         if dist_threshold < min_dist:
@@ -228,6 +229,7 @@ class Environments(object):
         else:
             ax = -0.2
         print(min_dist)
+
         return ax, steer
 
 if __name__ == '__main__':
