@@ -151,27 +151,16 @@ class Environments(object):
         if len(self.vehicles)<self.min_num_agent:
             self.spawn_agent()
 
-    def convert_to_global_path(self, local_infos, global_info):
-        global_path = []
+    def convert_to_global_path(self, local_path, vehicle):
+        rotation_mat = np.array([[np.cos(-vehicle.h), -np.sin(-vehicle.h)],
+                                [np.sin(-vehicle.h), np.cos(-vehicle.h)]])
 
-        global_x, global_y, global_h, global_v = global_info.x, global_info.y, global_info.h, global_info.v
+        global_pos = np.matmul(local_path[:,:2], rotation_mat) + np.array([vehicle.x, vehicle.y])
+        global_head = np.arctan2(np.sin(local_path[:,2] + vehicle.h), np.cos(local_path[:,2] + vehicle.h))[:,np.newaxis]
+        global_R = local_path[:,-1][:,np.newaxis]
 
-        for local_info in local_infos:
-            local_x, local_y, local_h, local_r = local_info
+        return np.concatenate([global_pos, global_head, global_R], axis=-1)
 
-            rotation_angle = global_h - local_h
-
-            rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle)],
-                                        [np.sin(rotation_angle), np.cos(rotation_angle)]])
-
-            global_positions = np.dot(rotation_matrix, np.array([local_x, local_y])) + np.array([global_x, global_y])
-
-            global_h = global_h
-
-            global_path.append(list(global_positions) + [global_h])
-
-        return global_path
-    
     def convert_to_global_sensor(self, sensors, vehicle):
         GlobalSensors = []
         rotation_matrix = np.array([[np.cos(vehicle.h), -np.sin(vehicle.h)],
@@ -231,7 +220,7 @@ class Environments(object):
         dist_arr = [get_distance(x,y,vehicle_x, vehicle_y) for id, x, y, h, vx, vy in sensor_info]
         
         # local path와의 거리
-        dist_arr = dist_arr + [get_distance(x,y,vehicle_x, vehicle_y) for x, y, h in lane_info]
+        dist_arr = dist_arr + [get_distance(x,y,vehicle_x, vehicle_y) for x, y, h, r in lane_info]
 
         min_dist = min(dist_arr) if len(dist_arr)>0 else 100
         if dist_threshold < min_dist:
