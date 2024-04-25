@@ -135,23 +135,8 @@ class Environments(object):
                 sensor_info = self.convert_to_global(sensor_info, global_info)
 
                 # 2. filtering
-                # sensor_info = self.filtering(sensor_info)
+                sensor_info = self.filtering(sensor_info)
 
-
-                # 3. Search for current lane candidate for each agent
-                # self.vehicles[id_].search_lane_cand(self.connectivity)
-
-                # 4. Search for possible lane candidates for each agent
-                # possible_lane_candidates = search_possible_lane(filtered_info)
-
-                # # 5. Predict path or intent for each agent
-                # predictions = predict_intent(current_lane_candidates, possible_lane_candidates)
-
-                # # 6. Lateral and longitudinal control of the SDV based on surrounding agents
-                # control_input = control_based_on_predictions(predictions)
-
-                # self.vehicles[id_].step_manual(ax = control_input["ax"], steer = control_input["steer"])
-                
             else:
                 self.vehicles[id_].step_auto(self.vehicles, self.int_pt_list[id_])
 
@@ -164,52 +149,47 @@ class Environments(object):
     def convert_to_global(self, local_infos, global_info):
         global_path = []
 
-        # Extract global info
         global_x, global_y, global_h, global_v = global_info.x, global_info.y, global_info.h, global_info.v
 
         for local_info in local_infos:
-            # Extract local info
             local_id, local_x, local_y, local_h, local_vx, local_vy = local_info
 
-            # Calculate rotation angle (difference between global and local orientations)
             rotation_angle = global_h - local_h
 
-            # Create rotation matrix
             rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle)],
                                         [np.sin(rotation_angle), np.cos(rotation_angle)]])
 
-            # Rotate and translate local positions to global frame
             global_positions = np.dot(rotation_matrix, np.array([local_x, local_y])) + np.array([global_x, global_y])
 
-            # Rotate local velocities to global frame
             global_velocities = np.dot(rotation_matrix, np.array([local_vx, local_vy]))
 
-            # The orientation is the same as the global frame's orientation
             global_h = global_h
 
-            # return list(global_positions) + [global_h] + list(global_velocities)
             global_path.append([local_id] + list(global_positions) + [global_h] + list(global_velocities))
 
         return global_path
-    
+
     def filtering(self, sensor_info):
         filtered_sensor_info = []
-
+        # id에 따라 센서 정보를 분류
         for sensor in sensor_info:
-            if sensor[0] in self.sensors:
-                self.sensors[sensor[0]].append(sensor[1:])
+            vehicle_id = sensor[0]
+            data = np.array(sensor[1:])
+            if vehicle_id in self.sensors.keys():
+                np.append(self.sensors[vehicle_id], data.reshape(1,5), axis=0)
             else:
-                self.sensors[sensor[0]] = [sensor[1:]]
+                self.sensors[vehicle_id] = [data]
 
         # noise filtering use by moving average filter
         for key in self.sensors.keys():
             self.sensors[key] = np.array(self.sensors[key])
             filtered_sensor_info.append([key] + list(np.mean(self.sensors[key], axis=0)))
-            filtered_sensor_info[-1][1] = moving_average(self.sensors[key][:,1], 5)
-            filtered_sensor_info[-1][2] = moving_average(self.sensors[key][:,2], 5)
-            filtered_sensor_info[-1][3] = moving_average(self.sensors[key][:,3], 5)
-            filtered_sensor_info[-1][4] = moving_average(self.sensors[key][:,4], 5)
-            filtered_sensor_info[-1][5] = moving_average(self.sensors[key][:,5], 5)
+            win_size = min(5, len(self.sensors[key]))
+            filtered_sensor_info[-1][0] = moving_average(self.sensors[key][:,0], win_size)
+            filtered_sensor_info[-1][1] = moving_average(self.sensors[key][:,1], win_size)
+            filtered_sensor_info[-1][2] = moving_average(self.sensors[key][:,2], win_size)
+            filtered_sensor_info[-1][3] = moving_average(self.sensors[key][:,3], win_size)
+            filtered_sensor_info[-1][4] = moving_average(self.sensors[key][:,4], win_size)
 
         return filtered_sensor_info
     
