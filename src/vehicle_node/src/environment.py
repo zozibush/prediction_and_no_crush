@@ -133,7 +133,7 @@ class Environments(object):
                 local_lane_info = self.vehicles[id_].get_local_path()
                 
                 ax = 0
-                steer = 0
+                steer = self.vehicles[id_].lateral_controller()
                 
                 # 1. 주변 차량과의 거리가 일정 이하일 때 이동
                 dist_arr = [math.sqrt(x**2+y**2) for id, x, y, h, vx, vy in sensor_info]
