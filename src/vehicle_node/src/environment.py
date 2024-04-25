@@ -136,7 +136,12 @@ class Environments(object):
                 global_lane_info = self.convert_to_global(local_lane_info, global_info)
 
                 # 2. filtering
-                filtered_sensor_fino = self.filtering(global_sensor_info)
+                filtered_sensor_info = self.filtering(global_sensor_info)
+
+                # 3. control
+                ax, steer = self.control(global_lane_info, filtered_sensor_info)
+
+                self.vehicles[id_].step_manual(ax, steer)
 
             else:
                 self.vehicles[id_].step_auto(self.vehicles, self.int_pt_list[id_])
@@ -194,6 +199,9 @@ class Environments(object):
 
         return filtered_sensor_info
     
+    def contorl(self, lane_info, sensor_info):
+        # control algorithm
+        return 0, 0
 
 if __name__ == '__main__':
 
