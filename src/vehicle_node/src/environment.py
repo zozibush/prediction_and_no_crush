@@ -132,9 +132,8 @@ class Environments(object):
                 local_lane_info = self.vehicles[id_].get_local_path()
 
                 # 1. convert to global
-                global_info = self.vehicles[id_]
-                global_sensor_info = self.convert_to_global(sensor_info, global_info)
-                global_lane_info = self.convert_to_global_path(local_lane_info, global_info)
+                global_sensor_info = self.convert_to_global_sensor(sensor_info, self.vehicles[id_])
+                global_lane_info = self.convert_to_global_path(local_lane_info, self.vehicles[id_])
 
                 # 2. filtering
                 filtered_sensor_info = self.filtering(global_sensor_info)
@@ -172,28 +171,24 @@ class Environments(object):
             global_path.append(list(global_positions) + [global_h])
 
         return global_path
-    def convert_to_global(self, local_infos, global_info):
-        global_path = []
+    
+    def convert_to_global_sensor(self, sensors, vehicle):
+        GlobalSensors = []
+        rotation_matrix = np.array([[np.cos(vehicle.h), -np.sin(vehicle.h)],
+                                    [np.sin(vehicle.h), np.cos(vehicle.h)]])
 
-        global_x, global_y, global_h, global_v = global_info.x, global_info.y, global_info.h, global_info.v
+        for sensor in sensors:
+            id_, local_x, local_y, local_h, local_vx, local_vy = sensor
 
-        for local_info in local_infos:
-            local_id, local_x, local_y, local_h, local_vx, local_vy = local_info
+            global_pos = np.dot(rotation_matrix, np.array([local_x, local_y])) + np.array([vehicle.x, vehicle.y])
+            global_vel = np.dot(rotation_matrix, np.array([local_vx, local_vy]))
 
-            rotation_angle = global_h - local_h
+            global_h = local_h + vehicle.h
+            global_h = np.arctan2(np.sin(global_h), np.cos(global_h))
 
-            rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle)],
-                                        [np.sin(rotation_angle), np.cos(rotation_angle)]])
+            GlobalSensors.append([id_, global_pos[0], global_pos[1], global_h, global_vel[0], global_vel[1]])
 
-            global_positions = np.dot(rotation_matrix, np.array([local_x, local_y])) + np.array([global_x, global_y])
-
-            global_velocities = np.dot(rotation_matrix, np.array([local_vx, local_vy]))
-
-            global_h = global_h
-
-            global_path.append([local_id] + list(global_positions) + [global_h] + list(global_velocities))
-
-        return global_path
+        return GlobalSensors
 
     def filtering(self, sensor_info):
         filtered_sensor_info = []
