@@ -228,7 +228,6 @@ class Environments(object):
             ax = 0.2
         else:
             ax = -0.2
-        print(min_dist)
 
         return ax, steer
 
