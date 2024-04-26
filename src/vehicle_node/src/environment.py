@@ -163,10 +163,14 @@ class Environments(object):
         min_dist = min(dist_arr) if len(dist_arr)>0 else 100
 
         # 센서로 측정된 주변 차량과 local path와의 거리
+        lookahead_dist = vehicle.v * 1
+        target_idx = np.where(lane_info[:,0]>=lookahead_dist)[0]
+        target_idx = len(lane_info)-1 if len(target_idx)==0 else target_idx[0]
+
         dist_arr = []
         for id, x, y, h, vx, vy in sensor_info:
-            dist_arr = dist_arr + [get_distance(xx,yy,x, y) for xx, yy, hh, rr in lane_info]
-        min_dist_path = min(dist_arr) if len(dist_arr)>0 else 100\
+            dist_arr = dist_arr + [get_distance(xx,yy,x, y) for xx, yy, hh, rr in lane_info[:target_idx, :]]
+        min_dist_path = min(dist_arr) if len(dist_arr)>0 else 100
 
         if dist_threshold < min_dist and path_dist_threshold < min_dist_path:
             ax = 0.2
