@@ -210,23 +210,24 @@ class Environments(object):
         steer = vehicle.lateral_controller()
         ax = 0
 
-        vehicle_x = vehicle.x
-        vehicle_y = vehicle.y
+        # lookahead distance만큼 떨어진 local path 상의 위치
+        lookahead_dist = vehicle.v * 1
+        dist_arr = np.array([get_distance(x, y, vehicle.x, vehicle.y) for x, y, _, _ in lane_info])
+        target_idx = np.where(dist_arr>=lookahead_dist)[0]
+        target_idx = len(lane_info)-1 if len(target_idx)==0 else target_idx[0]
+        target_idx = -1
+        vehicle_pos = [0, 0]
+        vehicle_pred_pos = [lane_info[target_idx][0], lane_info[target_idx][1]]
 
-        # 일정 거리 미만일 때 가속, 아니면 감속
-        dist_threshold = 15 # 일정 거리
+        # 센서로 측정된 주변 차량의 예측 위치 [[x1, y1], [x2, y2]]
+        sensor_predictions = [[[x, y],[x+vx, y+vy]] for id, x, y, h, vx, vy in sensor_info]
 
-        # 센서 측정된 주변 차량과 SDV와의 거리
-        dist_arr = [get_distance(x, y, vehicle_x, vehicle_y) for id, x, y, h, vx, vy in sensor_info]
-
-        # 센서 측정된 주변 차량과 local path와의 거리
-        for id, x, y, h, vx, vy in sensor_info:
-            dist_arr = dist_arr + [get_distance(xx,yy,x, y) for xx, yy, hh, rr in lane_info[:30,:]]
-
-        min_dist = min(dist_arr) if len(dist_arr)>0 else 100
-        if dist_threshold < min_dist:
+        #교차 여부를 판단
+        pred_intersections = [check_intersection(vehicle_pos, vehicle_pred_pos, [sensor_pos[0][0], sensor_pos[1][0]], [sensor_pred_pos[0][0], sensor_pred_pos[1][0]]) for [sensor_pos, sensor_pred_pos] in sensor_predictions]
+        if all(np.array(pred_intersections)==False):
             ax = 0.2
         else:
+            print("Intersection")
             ax = -0.2
 
         return ax, steer
