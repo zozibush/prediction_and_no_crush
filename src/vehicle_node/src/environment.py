@@ -215,7 +215,6 @@ class Environments(object):
         dist_arr = np.array([get_distance(x, y, vehicle.x, vehicle.y) for x, y, _, _ in lane_info])
         target_idx = np.where(dist_arr>=lookahead_dist)[0]
         target_idx = len(lane_info)-1 if len(target_idx)==0 else target_idx[0]
-        target_idx = -1
         vehicle_pos = [0, 0]
         vehicle_pred_pos = [lane_info[target_idx][0], lane_info[target_idx][1]]
 
