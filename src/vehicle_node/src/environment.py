@@ -155,17 +155,20 @@ class Environments(object):
         vehicle_y = vehicle.y
 
         # 일정 거리 미만일 때 가속, 아니면 감속
-        dist_threshold = 15 # 일정 거리
+        dist_threshold = 15 # sdv와 일정 거리
+        path_dist_threshold = 5 # path와 일정 거리
 
-        # 센서 측정된 주변 차량과 SDV와의 거리
+        # 센서로 측정된 주변 차량과 SDV와의 거리
         dist_arr = [get_distance(x, y, vehicle_x, vehicle_y) for id, x, y, h, vx, vy in sensor_info]
-
-        # 센서 측정된 주변 차량과 local path와의 거리
-        for id, x, y, h, vx, vy in sensor_info:
-            dist_arr = dist_arr + [get_distance(xx,yy,x, y) for xx, yy, hh, rr in lane_info[:30,:]]
-
         min_dist = min(dist_arr) if len(dist_arr)>0 else 100
-        if dist_threshold < min_dist:
+
+        # 센서로 측정된 주변 차량과 local path와의 거리
+        dist_arr = []
+        for id, x, y, h, vx, vy in sensor_info:
+            dist_arr = dist_arr + [get_distance(xx,yy,x, y) for xx, yy, hh, rr in lane_info]
+        min_dist_path = min(dist_arr) if len(dist_arr)>0 else 100\
+
+        if dist_threshold < min_dist and path_dist_threshold < min_dist_path:
             ax = 0.2
         else:
             ax = -0.2
